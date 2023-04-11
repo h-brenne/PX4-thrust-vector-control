@@ -229,6 +229,27 @@ PARAM_DEFINE_FLOAT(VT_FW_MIN_ALT, 0.0f);
 PARAM_DEFINE_FLOAT(VT_QC_HR_ERROR_I, 0.0f);
 
 /**
+ * Quad-chute uncommanded descent after transition
+ *
+ * Threshold for integrated height rate error to trigger a uncommanded-descent quad-chute within 10s after
+ * the transition to fixed-wing is completed. Replaces VT_QC_HR_ERROR_I in this phase if set to a positive value,
+ * otherwise VT_QC_HR_ERROR_I is used.
+ * Only checked in altitude-controlled fixed-wing flight.
+ * Additional conditions that have to be met for uncommanded descent detection are a positive (climbing) height
+ * rate setpoint and a negative (sinking) current height rate estimate.
+ *
+ * Set to 0 do disable this threshold.
+ *
+ * @unit m
+ * @min 0.0
+ * @max 200.0
+ * @increment 1
+ * @decimal 1
+ * @group VTOL Attitude Control
+ */
+PARAM_DEFINE_FLOAT(VT_QC_HR_E_I_TRN, 0.0f);
+
+/**
  * Quad-chute transition altitude loss threshold
  *
  * Altitude loss threshold for quad-chute triggering during VTOL transition to fixed-wing flight.

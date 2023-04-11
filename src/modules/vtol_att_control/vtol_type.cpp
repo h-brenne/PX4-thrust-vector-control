@@ -272,10 +272,18 @@ bool VtolType::isMinAltBreached()
 
 bool VtolType::isUncommandedDescent()
 {
-	if (_param_vt_qc_hr_error_i.get() > FLT_EPSILON && _v_control_mode->flag_control_altitude_enabled
+	float threshold = _param_vt_qc_hr_error_i.get();
+
+	if (_param_vt_qc_hr_e_i_trn.get() > FLT_EPSILON && hrt_elapsed_time(&_trans_finished_ts) < 10_s) {
+		// less than 10s since the transition to FW is over, use special threshold if that one is set to >0.
+		threshold = _param_vt_qc_hr_e_i_trn.get();
+	}
+
+	if (threshold > FLT_EPSILON && _v_control_mode->flag_control_altitude_enabled
 	    && hrt_elapsed_time(&_tecs_status->timestamp) < 1_s) {
 
-		// TODO if TECS publishes local_position_setpoint dependency on tecs_status can be dropped here
+		// TODO if TECS publishes local_position_setpoint dependency on tecs_status can be dropped here.
+		// In that case we though want to maybe add an extra check if(in_FW) to keep current behavior (only in FW).
 
 		if (_tecs_status->height_rate < -FLT_EPSILON && _tecs_status->height_rate_setpoint > FLT_EPSILON) {
 			// vehicle is currently in uncommended descend, start integrating error
@@ -291,7 +299,7 @@ bool VtolType::isUncommandedDescent()
 			_height_rate_error_integral = 0.f; // reset
 		}
 
-		return (_height_rate_error_integral > _param_vt_qc_hr_error_i.get());
+		return (_height_rate_error_integral > threshold);
 	}
 
 	return false;

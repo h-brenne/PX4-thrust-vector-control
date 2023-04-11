@@ -313,6 +313,7 @@ protected:
 					(ParamBool<px4::params::VT_ELEV_MC_LOCK>) _param_vt_elev_mc_lock,
 					(ParamFloat<px4::params::VT_FW_MIN_ALT>) _param_vt_fw_min_alt,
 					(ParamFloat<px4::params::VT_QC_HR_ERROR_I>) _param_vt_qc_hr_error_i,
+					(ParamFloat<px4::params::VT_QC_HR_E_I_TRN>) _param_vt_qc_hr_e_i_trn,
 					(ParamInt<px4::params::VT_FW_QC_P>) _param_vt_fw_qc_p,
 					(ParamInt<px4::params::VT_FW_QC_R>) _param_vt_fw_qc_r,
 					(ParamFloat<px4::params::VT_QC_T_ALT_LOSS>) _param_vt_qc_t_alt_loss,
