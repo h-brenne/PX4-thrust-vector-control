@@ -52,8 +52,6 @@
 // Do not call before quaternion states have been initialised
 void Ekf::initialiseCovariance()
 {
-	P.zero();
-
 	_delta_angle_bias_var_accum.setZero();
 	_delta_vel_bias_var_accum.setZero();
 
@@ -62,41 +60,39 @@ void Ekf::initialiseCovariance()
 	resetQuatCov();
 
 	// velocity
-	P(4,4) = sq(fmaxf(_params.gps_vel_noise, 0.01f));
-	P(5,5) = P(4,4);
-	P(6,6) = sq(1.5f) * P(4,4);
+	const float vel_var = sq(fmaxf(_params.gps_vel_noise, 0.01f));
+	P.uncorrelateCovarianceSetVariance<State::vel.dof>(State::vel.idx, Vector3f(vel_var, vel_var, sq(1.5f) * vel_var));
 
 	// position
-	P(7,7) = sq(fmaxf(_params.gps_pos_noise, 0.01f));
-	P(8,8) = P(7,7);
-	P(9,9) = sq(fmaxf(_params.baro_noise, 0.01f));
+	const float xy_pos_var = sq(fmaxf(_params.gps_pos_noise, 0.01f));
+	float z_pos_var = sq(fmaxf(_params.baro_noise, 0.01f));
 
 	if (_control_status.flags.gps_hgt) {
-		P(9,9) = sq(fmaxf(1.5f * _params.gps_pos_noise, 0.01f));
+		z_pos_var = sq(fmaxf(1.5f * _params.gps_pos_noise, 0.01f));
 	}
 
 #if defined(CONFIG_EKF2_RANGE_FINDER)
 	if (_control_status.flags.rng_hgt) {
-		P(9,9) = sq(fmaxf(_params.range_noise, 0.01f));
+		z_pos_var = sq(fmaxf(_params.range_noise, 0.01f));
 	}
 #endif // CONFIG_EKF2_RANGE_FINDER
 
+	P.uncorrelateCovarianceSetVariance<State::pos.dof>(State::pos.idx, Vector3f(xy_pos_var, xy_pos_var, z_pos_var));
+
 	// gyro bias
-	_prev_delta_ang_bias_var(0) = P(10,10) = sq(_params.switch_on_gyro_bias * dt);
-	_prev_delta_ang_bias_var(1) = P(11,11) = P(10,10);
-	_prev_delta_ang_bias_var(2) = P(12,12) = P(10,10);
+	const float delta_ang_var = sq(_params.switch_on_gyro_bias * dt);
+	P.uncorrelateCovarianceSetVariance<State::delta_ang_bias.dof>(State::delta_ang_bias.idx, delta_ang_var);
+	_prev_delta_ang_bias_var.setAll(delta_ang_var);
 
 	// accel bias
-	_prev_dvel_bias_var(0) = P(13,13) = sq(_params.switch_on_accel_bias * dt);
-	_prev_dvel_bias_var(1) = P(14,14) = P(13,13);
-	_prev_dvel_bias_var(2) = P(15,15) = P(13,13);
+	const float delta_vel_var = sq(_params.switch_on_accel_bias * dt);
+	P.uncorrelateCovarianceSetVariance<State::delta_vel_bias.dof>(State::delta_vel_bias.idx, delta_vel_var);
+	_prev_dvel_bias_var.setAll(delta_vel_var);
 
 	resetMagCov();
 
 	// wind
-	P(22,22) = sq(_params.initial_wind_uncertainty);
-	P(23,23) = P(22,22);
-
+	P.uncorrelateCovarianceSetVariance<State::wind_vel.dof>(State::wind_vel.idx, sq(_params.initial_wind_uncertainty));
 }
 
 void Ekf::predictCovariance(const imuSample &imu_delayed)
