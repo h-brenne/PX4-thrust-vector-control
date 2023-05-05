@@ -103,6 +103,8 @@ px4_add_romfs_files(
 	# [14000, 14999] MC with tilt
 	14001_generic_mc_with_tilt
 
+	15001_generic_mc_2DOF_tilt
+
 	16001_helicopter
 
 	# [17000, 17999] Autogyro

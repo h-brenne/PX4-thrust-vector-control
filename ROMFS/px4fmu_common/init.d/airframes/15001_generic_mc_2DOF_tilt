@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# @name Generic Multirotor with tilt
+#
+# @class Copter
+# @type 2DOF Tilt Copter
+#
+# @output Motor1 motor 1
+# @output Motor2 motor 2
+# @output Servo1 elevation 1 servo
+# @output Servo2 elevation 2 servo
+# @output Servo3 elevation 1 servo
+# @output Servo4 elevation 2 servo
+#
+# @board bitcraze_crazyflie exclude
+# @board px4_fmu-v2 exclude
+#
+
+. ${R}etc/init.d/rc.mc_defaults
+
+param set-default CA_AIRFRAME 16
+# Tricopter
+param set-default CA_ROTOR_COUNT 2
+param set-default CA_ROTOR0_PX 0.0
+param set-default CA_ROTOR0_PY 0.0
+param set-default CA_ROTOR0_PZ 0.2500
+param set-default CA_ROTOR1_PX 0.0
+param set-default CA_ROTOR1_PY 0.0
+param set-default CA_ROTOR1_PZ -0.2500
+param set-default CA_SV_2D0_EMAXA 45.0000
+param set-default CA_SV_2D1_EMAXA 45.0000
+

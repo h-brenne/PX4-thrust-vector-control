@@ -261,6 +261,9 @@ ControlAllocator::update_effectiveness_source()
 		case EffectivenessSource::HELICOPTER:
 			tmp = new ActuatorEffectivenessHelicopter(this);
 			break;
+		case EffectivenessSource::MCTilt2DOF:
+			tmp = new ActuatorEffectivenessMCTilt2DOF(this);
+			break;
 
 		default:
 			PX4_ERR("Unknown airframe");
@@ -398,7 +401,6 @@ ControlAllocator::Run()
 		c[0](3) = _thrust_sp(0);
 		c[0](4) = _thrust_sp(1);
 		c[0](5) = _thrust_sp(2);
-
 		if (_num_control_allocation > 1) {
 			if (_vehicle_torque_setpoint1_sub.copy(&vehicle_torque_setpoint)) {
 				c[1](0) = vehicle_torque_setpoint.xyz[0];
@@ -416,10 +418,13 @@ ControlAllocator::Run()
 		for (int i = 0; i < _num_control_allocation; ++i) {
 
 			_control_allocation[i]->setControlSetpoint(c[i]);
-
 			// Do allocation
 			_control_allocation[i]->allocate();
 			_actuator_effectiveness->allocateAuxilaryControls(dt, i, _control_allocation[i]->_actuator_sp); //flaps and spoilers
+			//Log actuator setpoints
+			/*for (int j = 0; j < 6; ++j) {
+				PX4_INFO("actuator %d: %f", j, (double)_control_allocation[i]->_actuator_sp(j));
+			}*/
 			_actuator_effectiveness->updateSetpoint(c[i], i, _control_allocation[i]->_actuator_sp,
 								_control_allocation[i]->getActuatorMin(), _control_allocation[i]->getActuatorMax());
 
@@ -498,7 +503,7 @@ ControlAllocator::update_effectiveness_matrix_if_needed(EffectivenessUpdateReaso
 						minimum[selected_matrix](actuator_idx_matrix[selected_matrix]) = -1.f;
 
 					} else {
-						minimum[selected_matrix](actuator_idx_matrix[selected_matrix]) = 0.f;
+						minimum[selected_matrix](actuator_idx_matrix[selected_matrix]) = -1.f;
 					}
 
 					slew_rate[selected_matrix](actuator_idx_matrix[selected_matrix]) = _params.slew_rate_motors[actuator_type_idx];
@@ -672,8 +677,6 @@ ControlAllocator::publish_actuator_controls()
 		actuator_motors.control[i] = NAN;
 	}
 
-	_actuator_motors_pub.publish(actuator_motors);
-
 	// servos
 	if (_num_actuators[1] > 0) {
 		int servos_idx;
@@ -689,9 +692,14 @@ ControlAllocator::publish_actuator_controls()
 		for (int i = servos_idx; i < actuator_servos_s::NUM_CONTROLS; i++) {
 			actuator_servos.control[i] = NAN;
 		}
-
-		_actuator_servos_pub.publish(actuator_servos);
 	}
+	// We need to apply the transformation just before the output. This is to make sure that the transformed
+	// output is not used to calculate the achieved force/moment, as it does not correspond to the effectiveness matrix
+	_actuator_effectiveness->transformActuatorControls(actuator_motors, actuator_servos);
+
+	_actuator_motors_pub.publish(actuator_motors);
+	_actuator_servos_pub.publish(actuator_servos);
+
 }
 
 void

@@ -45,6 +45,10 @@
 
 #include <matrix/matrix/math.hpp>
 #include <uORB/topics/control_allocator_status.h>
+#include <uORB/topics/actuator_motors.h>
+#include <uORB/topics/actuator_servos.h>
+
+
 
 enum class AllocationMethod {
 	NONE = -1,
@@ -210,6 +214,13 @@ public:
 	 * Can be implemented for every type separately. If not implemented then the effectivenes matrix is used instead.
 	 */
 	virtual void getUnallocatedControl(int matrix_index, control_allocator_status_s &status) {}
+
+	/**
+	 * Transform actuator controls, customized by effectiveness type.
+	 * Only motors as of now. If not implemented then the actuator controls are not transformed.
+	 */
+
+	virtual void transformActuatorControls(actuator_motors_s &actuator_motors, actuator_servos_s &actuator_servos) {}
 
 protected:
 	FlightPhase _flight_phase{FlightPhase::HOVER_FLIGHT};		///< Current flight phase
