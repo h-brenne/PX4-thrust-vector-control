@@ -164,6 +164,31 @@ MulticopterRateControl::Run()
 				_thrust_setpoint(2) = -(manual_control_setpoint.throttle + 1.f) * .5f;
 				_thrust_setpoint(0) = _thrust_setpoint(1) = 0.f;
 
+				//Test omni forces
+				/*float x_thrust = manual_control_setpoint.aux1;
+				float y_thrust = manual_control_setpoint.aux2;
+				float z_thrust = (manual_control_setpoint.throttle+1)*.5f;
+
+				// Check if the total horizontal thrust has exceeded the maximum
+				Vector2f h_thrust = Vector2f(x_thrust, y_thrust);
+				float h_thrust_norm = h_thrust.norm();
+
+				if (h_thrust_norm > 1.0F) {
+					h_thrust /= h_thrust_norm;
+				}
+				float max_horizontal_thrust = 0.3;
+				h_thrust *= max_horizontal_thrust;
+
+				// Check if the total thrust has exceeded the maximum
+				Vector3f total_thrust = Vector3f(h_thrust(0), h_thrust(1), z_thrust);
+
+				total_thrust = total_thrust / total_thrust.norm() * z_thrust;
+
+				_thrust_setpoint(0) = total_thrust(0);
+				_thrust_setpoint(1) = total_thrust(1);
+				_thrust_setpoint(2) = -total_thrust(2);
+				PX4_INFO("x_thrust: %f, y_thrust: %f, z_thrust: %f", (double)_thrust_setpoint(0), (double)_thrust_setpoint(1), (double)_thrust_setpoint(2));*/
+
 				// publish rate setpoint
 				vehicle_rates_setpoint.roll = _rates_setpoint(0);
 				vehicle_rates_setpoint.pitch = _rates_setpoint(1);

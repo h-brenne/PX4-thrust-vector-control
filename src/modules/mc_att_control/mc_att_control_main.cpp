@@ -179,6 +179,43 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 	attitude_setpoint.yaw_body = euler_sp(2);
 
 	attitude_setpoint.thrust_body[2] = -throttle_curve((_manual_control_setpoint.throttle + 1.f) * .5f);
+
+	// Generate NED force vector to be applied to the vehicle in the body frame
+	bool omni_manual = false;
+	if (omni_manual) {
+		float x_thrust = _manual_control_setpoint.aux1;
+		float y_thrust = _manual_control_setpoint.aux2;
+		float z_thrust = (_manual_control_setpoint.throttle + 1.f) * .5f;
+
+		// Check if the total horizontal thrust has exceeded the maximum
+		Vector2f h_thrust = Vector2f(x_thrust, y_thrust);
+		float h_thrust_norm = h_thrust.norm();
+
+		if (h_thrust_norm > 1.0F) {
+			h_thrust /= h_thrust_norm;
+		}
+		float max_horizontal_thrust = 0.3;
+		h_thrust *= max_horizontal_thrust;
+
+		// Check if the total thrust has exceeded the maximum
+		Vector3f total_thrust = Vector3f(h_thrust(0), h_thrust(1), z_thrust);
+
+		total_thrust = total_thrust / total_thrust.norm() * z_thrust;
+
+		// Transform the thrust vector to body frame
+		matrix::Dcmf R_body = q;
+		Vector3f body_x, body_y, body_z;
+		for (int i = 0; i < 3; i++) {
+			body_x(i) = R_body(i, 0);
+			body_y(i) = R_body(i, 1);
+			body_z(i) = R_body(i, 2);
+		}
+
+		attitude_setpoint.thrust_body[0] = total_thrust.dot(body_x);
+		attitude_setpoint.thrust_body[1] = total_thrust.dot(body_y);
+		attitude_setpoint.thrust_body[2] = -throttle_curve(total_thrust.dot(body_z));
+		//PX4_INFO("x_thrust: %f, y_thrust: %f, z_thrust: %f", (double)x_thrust, (double)y_thrust, (double)z_thrust);
+	}
 	attitude_setpoint.timestamp = hrt_absolute_time();
 
 	_vehicle_attitude_setpoint_pub.publish(attitude_setpoint);
