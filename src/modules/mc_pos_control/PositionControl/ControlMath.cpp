@@ -44,10 +44,53 @@ using namespace matrix;
 
 namespace ControlMath
 {
-void thrustToAttitude(const Vector3f &thr_sp, const float yaw_sp, vehicle_attitude_setpoint_s &att_sp)
+void thrustToAttitude(const Vector3f &thr_sp, const float yaw_sp, const matrix::Quatf &att, const bool omni,
+		      float &omni_att_roll, float &omni_att_pitch, vehicle_attitude_setpoint_s &att_sp)
 {
-	bodyzToAttitude(-thr_sp, yaw_sp, att_sp);
-	att_sp.thrust_body[2] = -thr_sp.length();
+	if (omni) {
+		thrustToFixedRollPitch(thr_sp, yaw_sp, att, omni_att_roll, omni_att_pitch, 1, att_sp);
+	} else {
+		bodyzToAttitude(-thr_sp, yaw_sp, att_sp);
+		att_sp.thrust_body[2] = -thr_sp.length();
+	}
+}
+
+// Simple version of https://github.com/castacks/PX4-fully-actuated/
+// Consider implementing all their control strategies
+
+void thrustToFixedRollPitch(const matrix::Vector3f &thr_sp, const float yaw_sp, const matrix::Quatf &att,
+			    const float roll_angle, const float pitch_angle, int omni_proj_axes, vehicle_attitude_setpoint_s &att_sp)
+{
+	Eulerf euler_cmd(roll_angle, pitch_angle, yaw_sp);
+
+	Quatf q_sp = euler_cmd;
+	q_sp.copyTo(att_sp.q_d);
+
+	// calculate euler angles, for logging only, must not be used for control
+	att_sp.roll_body = roll_angle;
+	att_sp.pitch_body = pitch_angle;
+	att_sp.yaw_body = yaw_sp;
+
+	matrix::Dcmf R_body;
+
+	if (omni_proj_axes == 0) { // if thrust is projected onm the commanded attitude
+		R_body = q_sp;
+
+	} else if (omni_proj_axes == 1) { // if thrust is projected on the current attitude
+		R_body = att;
+	}
+
+	Vector3f body_x, body_y, body_z;
+
+	for (int i = 0; i < 3; i++) {
+		body_x(i) = R_body(i, 0);
+		body_y(i) = R_body(i, 1);
+		body_z(i) = R_body(i, 2);
+	}
+
+	att_sp.thrust_body[0] = thr_sp.dot(body_x);
+	att_sp.thrust_body[1] = thr_sp.dot(body_y);
+	att_sp.thrust_body[2] = thr_sp.dot(body_z);
 }
 
 void limitTilt(Vector3f &body_unit, const Vector3f &world_unit, const float max_angle)

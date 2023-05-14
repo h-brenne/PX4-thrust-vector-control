@@ -555,9 +555,15 @@ void MulticopterPositionControl::Run()
 			local_pos_sp.timestamp = hrt_absolute_time();
 			_local_pos_sp_pub.publish(local_pos_sp);
 
+
+			_att_sub.update(&att);
 			// Publish attitude setpoint output
 			vehicle_attitude_setpoint_s attitude_setpoint{};
-			_control.getAttitudeSetpoint(attitude_setpoint);
+			float roll_sp = 0.f;
+			float pitch_sp = 0.f;
+			_control.getAttitudeSetpoint(matrix::Quatf(att.q), /*_param_omni.get()*/ 1, roll_sp, pitch_sp,
+						     attitude_setpoint);
+			//_control.getAttitudeSetpoint(attitude_setpoint);
 			attitude_setpoint.timestamp = hrt_absolute_time();
 			_vehicle_attitude_setpoint_pub.publish(attitude_setpoint);
 

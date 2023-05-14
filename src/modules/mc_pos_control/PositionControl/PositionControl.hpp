@@ -175,9 +175,14 @@ public:
 	 * Get the controllers output attitude setpoint
 	 * This attitude setpoint was generated from the resulting acceleration setpoint after position and velocity control.
 	 * It needs to be executed by the attitude controller to achieve velocity and position tracking.
+	 * @param att current attitude of the robot
+	 * @param omni mode for omnidirectional vehicles
+	 * @param omni_att_roll the desired roll for the vehicle in mode=4, is output for mode > 5 (in radians)
+	 * @param omni_att_pitch the desired pitch for the vehicle in mode=4, is output for mode=6 (in radians)
 	 * @param attitude_setpoint reference to struct to fill up
 	 */
-	void getAttitudeSetpoint(vehicle_attitude_setpoint_s &attitude_setpoint) const;
+	void getAttitudeSetpoint(const matrix::Quatf &att, const bool omni, float &omni_att_roll, float &omni_att_pitch,
+				vehicle_attitude_setpoint_s &attitude_setpoint) const;
 
 	/**
 	 * All setpoints are set to NAN (uncontrolled). Timestampt zero.
