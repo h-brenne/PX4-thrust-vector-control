@@ -120,8 +120,7 @@ ActuatorEffectivenessMCTilt2DOF::computeEffectivenessMatrix(const ActuatorEffect
 		// Needs to be set to the same value in the thrust_vector_controller receiving u.
 		float ct = geometry.rotors[i].thrust_coef;
 
-		// Make sure km is given in terms of thrust scaling
-		float km = ct*geometry.rotors[i].moment_ratio;
+		float km = geometry.rotors[i].moment_ratio;
 
 		// Fill corresponding items in effectiveness matrix
 		// Decomposed forces
@@ -129,15 +128,15 @@ ActuatorEffectivenessMCTilt2DOF::computeEffectivenessMatrix(const ActuatorEffect
 			effectiveness(j+3, 3*i + actuator_start_index + j) = ct;
 			}
 		// Decomposed moments
-		effectiveness(0, 3*i + actuator_start_index) = 0;//Have to find seperate value;
+		effectiveness(0, 3*i + actuator_start_index) = ct*km;
 		effectiveness(1, 3*i + actuator_start_index) = ct*position(2);
 		effectiveness(2, 3*i + actuator_start_index) = -ct*position(1);
 		effectiveness(0, 3*i + 1 + actuator_start_index) = -ct*position(2);
-		effectiveness(1, 3*i + 1 + actuator_start_index) = 0;//km;
+		effectiveness(1, 3*i + 1 + actuator_start_index) = ct*km;
 		effectiveness(2, 3*i + 1 + actuator_start_index) = ct*position(0);
 		effectiveness(0, 3*i + 2 + actuator_start_index) = ct*position(1);
 		effectiveness(1, 3*i + 2 + actuator_start_index) = -ct*position(0);
-		effectiveness(2, 3*i + 2 + actuator_start_index) = km;
+		effectiveness(2, 3*i + 2 + actuator_start_index) = ct*km;
 		}
 	return num_actuators;
 }
